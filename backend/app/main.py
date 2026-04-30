@@ -1,9 +1,19 @@
-from fastapi import FastAPI
+import asyncio
+import logging
+import time
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.config import get_settings
 from app.core.database import engine, Base
 from app.api import auth, bazi, ziwei, liuyao
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-7s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("yichart")
 
 settings = get_settings()
 
@@ -27,13 +37,17 @@ def run_migrations():
 
     # 应用已有迁移
     command.upgrade(alembic_cfg, "head")
-    print("数据库迁移检查完成")
+    logger.info("数据库迁移检查完成")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    run_migrations()
+    logger.info("正在启动 YiChart API ...")
+    logger.info("数据库: %s", settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else settings.DATABASE_URL)
+    await asyncio.to_thread(run_migrations)
+    logger.info("YiChart API 启动完成")
     yield
+    logger.info("YiChart API 正在关闭")
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -50,6 +64,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+    logger.info("%s %s %d (%.0fms)", request.method, request.url.path, response.status_code, duration * 1000)
+    return response
+
 
 # 注册路由
 app.include_router(auth.router)
