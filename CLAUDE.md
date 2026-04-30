@@ -6,7 +6,7 @@
 
 - **前端**: Vue 3 + Vite + TypeScript + Pinia + Vue Router + Element Plus
 - **后端**: Python 3.11+ + FastAPI + SQLAlchemy 2.0 + Alemic
-- **数据库**: SQLite (dev) / PostgreSQL (prod)
+- **数据库**: MySQL
 - **大模型**: OpenAI GPT API (gpt-4o / gpt-4o-mini)
 - **部署**: Docker + Docker Compose
 
@@ -77,7 +77,7 @@ docker-compose up -d
 
 后端环境变量 (`.env`):
 ```
-DATABASE_URL=sqlite:///./yichart.db
+DATABASE_URL=mysql+pymysql://user:password@host:3306/yichart?charset=utf8mb4
 SECRET_KEY=your-secret-key
 OPENAI_API_KEY=your-openai-key
 OPENAI_MODEL=gpt-4o-mini
