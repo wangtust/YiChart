@@ -101,20 +101,24 @@ def get_history(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
-    user_id: int | None = Depends(get_optional_user_id),
+    user_id: int = Depends(get_current_user_id),
 ):
-    """获取历史记录 - 登录用户只看自己的，未登录看全部"""
-    query = db.query(BaziRecord)
-    if user_id:
-        query = query.filter(BaziRecord.user_id == user_id)
-    records = query.order_by(BaziRecord.created_at.desc()).offset(skip).limit(limit).all()
+    """获取当前用户的历史记录"""
+    records = (
+        db.query(BaziRecord)
+        .filter(BaziRecord.user_id == user_id)
+        .order_by(BaziRecord.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return records
 
 
 @router.get("/{record_id}", response_model=BaziRecordResponse)
-def get_record(record_id: int, db: Session = Depends(get_db)):
+def get_record(record_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
     """获取单条记录详情"""
-    record = db.query(BaziRecord).filter(BaziRecord.id == record_id).first()
+    record = db.query(BaziRecord).filter(BaziRecord.id == record_id, BaziRecord.user_id == user_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
     return record

@@ -48,6 +48,22 @@ export const baziApi = {
   getRecord: (id: number) => api.get(`/bazi/${id}`),
 }
 
+// 紫微接口
+export const ziweiApi = {
+  calculate: (data: any) => api.post('/ziwei/calculate', data),
+  getHistory: (skip = 0, limit = 20) =>
+    api.get('/ziwei/history', { params: { skip, limit } }),
+  getRecord: (id: number) => api.get(`/ziwei/${id}`),
+}
+
+// 六爻接口
+export const liuyaoApi = {
+  calculate: (data: any) => api.post('/liuyao/calculate', data),
+  getHistory: (skip = 0, limit = 20) =>
+    api.get('/liuyao/history', { params: { skip, limit } }),
+  getRecord: (id: number) => api.get(`/liuyao/${id}`),
+}
+
 // 流式分析接口
 export async function streamAnalyze(
   data: BaziInput,

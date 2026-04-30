@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { baziApi, ziweiApi, liuyaoApi } from '@/api'
 
 const route = useRoute()
 const loading = ref(true)
@@ -68,10 +69,9 @@ onMounted(async () => {
 
   if (id) {
     try {
-      const resp = await fetch(`/api/${type}/${id}`)
-      if (resp.ok) {
-        record.value = await resp.json()
-      }
+      const apiMap: Record<string, any> = { bazi: baziApi, ziwei: ziweiApi, liuyao: liuyaoApi }
+      const apiClient = apiMap[type] || baziApi
+      record.value = await apiClient.getRecord(Number(id))
     } catch {
       // handle error
     }

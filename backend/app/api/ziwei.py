@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.security import get_optional_user_id
+from app.core.security import get_current_user_id, get_optional_user_id
 from app.models.ziwei_record import ZiweiRecord
 from app.schemas.ziwei import ZiweiInput, ZiweiRecordResponse
 from app.services.ziwei_calculator import calculate_ziwei
@@ -81,17 +81,22 @@ def get_history(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
-    user_id: int | None = Depends(get_optional_user_id),
+    user_id: int = Depends(get_current_user_id),
 ):
-    query = db.query(ZiweiRecord)
-    if user_id:
-        query = query.filter(ZiweiRecord.user_id == user_id)
-    return query.order_by(ZiweiRecord.created_at.desc()).offset(skip).limit(limit).all()
+    records = (
+        db.query(ZiweiRecord)
+        .filter(ZiweiRecord.user_id == user_id)
+        .order_by(ZiweiRecord.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return records
 
 
 @router.get("/{record_id}", response_model=ZiweiRecordResponse)
-def get_record(record_id: int, db: Session = Depends(get_db)):
-    record = db.query(ZiweiRecord).filter(ZiweiRecord.id == record_id).first()
+def get_record(record_id: int, db: Session = Depends(get_db), user_id: int = Depends(get_current_user_id)):
+    record = db.query(ZiweiRecord).filter(ZiweiRecord.id == record_id, ZiweiRecord.user_id == user_id).first()
     if not record:
         raise HTTPException(status_code=404, detail="记录不存在")
     return record

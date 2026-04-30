@@ -62,7 +62,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { baziApi } from '@/api'
+import { baziApi, ziweiApi, liuyaoApi } from '@/api'
 
 const router = useRouter()
 const loading = ref(true)
@@ -100,8 +100,8 @@ onMounted(async () => {
   try {
     const [baziList, ziweiList, liuyaoList] = await Promise.all([
       baziApi.getHistory().catch(() => []),
-      fetch('/api/ziwei/history').then(r => r.json()).catch(() => []),
-      fetch('/api/liuyao/history').then(r => r.json()).catch(() => []),
+      ziweiApi.getHistory().catch(() => []),
+      liuyaoApi.getHistory().catch(() => []),
     ])
 
     const all = [
