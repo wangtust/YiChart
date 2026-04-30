@@ -54,9 +54,13 @@ export async function streamAnalyze(
   onChunk: (text: string) => void,
   onDone?: () => void
 ) {
+  const token = localStorage.getItem('token')
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const response = await fetch('/api/bazi/analyze', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(data),
   })
 

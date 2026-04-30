@@ -154,12 +154,12 @@ function getWuxingBgClass(wx: string) {
 
 function formatAnalysis(text: string) {
   return text
-    .replace(/\n/g, '<br>')
-    .replace(/#{3}\s*(.+)/g, '<h3 class="analysis-h3">$1</h3>')
-    .replace(/#{2}\s*(.+)/g, '<h2 class="analysis-h2">$1</h2>')
-    .replace(/#{1}\s*(.+)/g, '<h1 class="analysis-h1">$1</h1>')
+    .replace(/^###\s*(.+)$/gm, '<h3 class="analysis-h3">$1</h3>')
+    .replace(/^##\s*(.+)$/gm, '<h2 class="analysis-h2">$1</h2>')
+    .replace(/^#\s*(.+)$/gm, '<h1 class="analysis-h1">$1</h1>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
 }
 
 async function handleAnalyze() {

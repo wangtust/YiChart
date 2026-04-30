@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class ZiweiInput(BaseModel):
@@ -18,7 +19,7 @@ class ZiweiRecordResponse(BaseModel):
     ming_gong: Optional[str] = None
     shen_gong: Optional[str] = None
     ai_analysis: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

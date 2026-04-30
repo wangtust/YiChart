@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class LiuYaoInput(BaseModel):
@@ -18,9 +19,9 @@ class LiuYaoRecordResponse(BaseModel):
     bian_gua_name: Optional[str] = None
     shi_yao: Optional[int] = None
     ying_yao: Optional[int] = None
-    liu_qin: Optional[dict] = None
+    liu_qin: Optional[list] = None
     ai_analysis: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

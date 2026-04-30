@@ -24,7 +24,7 @@ const router = createRouter({
       component: () => import('@/views/LiuyaoPage.vue'),
     },
     {
-      path: '/result/:id?',
+      path: '/result/:type?/:id?',
       name: 'result',
       component: () => import('@/views/ResultPage.vue'),
     },

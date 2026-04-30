@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class BaziInput(BaseModel):
@@ -39,7 +40,7 @@ class BaziRecordResponse(BaseModel):
     shengxiao: Optional[str] = None
     nayin: Optional[str] = None
     ai_analysis: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
