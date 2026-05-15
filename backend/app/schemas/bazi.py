@@ -1,19 +1,19 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Literal, Optional
 from datetime import datetime
 
 
 class BaziInput(BaseModel):
     birth_date: str  # YYYY-MM-DD
     birth_time: str  # HH:MM
-    gender: str  # male / female
+    gender: Literal["male", "female"]
     is_lunar: bool = False  # 是否农历
 
 
 class Pillar(BaseModel):
     heavenly_stem: str  # 天干
     earthly_branch: str  # 地支
-    hidden_stems: list[str] = []  # 藏干
+    hidden_stems: list[str] = Field(default_factory=list)  # 藏干
     wuxing: str  # 五行
 
 

@@ -86,7 +86,7 @@
     <!-- AI 分析 -->
     <div v-if="aiAnalysis" class="analysis-section">
       <h2 class="section-title">AI 解卦</h2>
-      <div class="analysis-content" v-html="formatAnalysis(aiAnalysis)"></div>
+      <div class="analysis-content" v-html="formatAnalysisHtml(aiAnalysis)"></div>
     </div>
   </div>
 </template>
@@ -94,28 +94,22 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { liuyaoApi, streamAnalyze } from '@/api'
+import type { LiuYaoInput, LiuYaoResult } from '@/api'
+import { formatAnalysisHtml } from '@/utils/formatAnalysis'
 
 const loading = ref(false)
 const isShaking = ref(false)
-const liuyaoResult = ref<any>(null)
+const liuyaoResult = ref<LiuYaoResult | null>(null)
 const aiAnalysis = ref('')
 
 const form = reactive({
   question: '',
 })
 
-function formatAnalysis(text: string) {
-  return text
-    .replace(/^###\s*(.+)$/gm, '<h3 class="analysis-h3">$1</h3>')
-    .replace(/^##\s*(.+)$/gm, '<h2 class="analysis-h2">$1</h2>')
-    .replace(/^#\s*(.+)$/gm, '<h1 class="analysis-h1">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
-}
-
 async function handleShake() {
-  if (!form.question.trim()) {
+  const question = form.question.trim()
+  if (!question) {
     ElMessage.warning('请先描述您想问的事情')
     return
   }
@@ -131,51 +125,22 @@ async function handleShake() {
   isShaking.value = false
 
   try {
-    const token = localStorage.getItem('token')
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
     // 起卦
-    const result = await fetch('/api/liuyao/calculate', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ question: form.question, method: 'random' }),
-    }).then(r => r.json())
+    const result = await liuyaoApi.calculate({ question, method: 'random' })
     liuyaoResult.value = result
 
-    // 流式获取 AI 解卦
-    const response = await fetch('/api/liuyao/analyze', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ question: form.question, method: 'random' }),
-    })
-
-    const reader = response.body?.getReader()
-    if (!reader) return
-
-    const decoder = new TextDecoder()
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const text = decoder.decode(value)
-      for (const line of text.split('\n')) {
-        if (line.startsWith('data: ')) {
-          const content = line.slice(6)
-          if (content === '[DONE]') {
-            loading.value = false
-            return
-          }
-          try {
-            const parsed = JSON.parse(content)
-            if (parsed.content) aiAnalysis.value += parsed.content
-          } catch {}
-        }
-      }
+    // 用第一次摇出的爻值做手动参数，避免展示卦象和 AI 保存记录二次随机不一致。
+    const analyzePayload: LiuYaoInput = {
+      question,
+      method: 'manual',
+      manual_yao: result.yao_lines.map((yao) => yao.数值),
     }
-    loading.value = false
-  } catch (error: any) {
-    ElMessage.error(error.message || '起卦失败')
+    await streamAnalyze('/liuyao/analyze', analyzePayload, (chunk) => {
+      aiAnalysis.value += chunk
+    })
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '起卦失败')
+  } finally {
     loading.value = false
   }
 }

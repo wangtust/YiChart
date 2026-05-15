@@ -1,11 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
 class LiuYaoInput(BaseModel):
     question: str  # 占卜问题
-    method: str = "random"  # 起卦方式: random(自动) / manual(手动输入六爻)
+    method: Literal["random", "manual"] = "random"  # 起卦方式: random(自动) / manual(手动输入六爻)
     manual_yao: Optional[list[int]] = None  # 手动输入六爻 (7=少阳, 8=少阴, 9=老阳, 6=老阴)
 
 

@@ -18,26 +18,18 @@
 | 后端 | Python + FastAPI + SQLAlchemy |
 | 数据库 | MySQL |
 | AI | OpenAI GPT (gpt-4o-mini) |
-| 部署 | Docker Compose |
 
 ## 快速开始
 
 ### 环境变量
 
-在项目根目录创建 `.env`：
+在 `backend` 目录创建 `.env`：
 
 ```env
+DATABASE_URL=mysql+pymysql://user:password@host:3306/yichart?charset=utf8mb4
 OPENAI_API_KEY=sk-xxx
 SECRET_KEY=your-secret-key
 ```
-
-### Docker 部署
-
-```bash
-docker-compose up -d
-```
-
-访问 http://localhost 即可。
 
 ### 本地开发
 
@@ -59,7 +51,7 @@ npm install
 npm run dev
 ```
 
-访问 http://localhost:5173。
+访问 http://localhost:5173。开发环境下前端的 `/api` 请求会由 Vite 代理到后端 `http://localhost:8000`。
 
 ## 项目结构
 
@@ -75,7 +67,6 @@ YiChart/
 │       ├── models/    # 数据模型
 │       ├── services/  # 业务逻辑
 │       └── prompts/   # AI Prompt 模板
-├── docker-compose.yml
 └── CLAUDE.md
 ```
 
@@ -89,4 +80,3 @@ YiChart/
 | POST | `/api/ziwei/analyze` | 紫微 AI 分析 (SSE) |
 | POST | `/api/liuyao/analyze` | 六爻 AI 分析 (SSE) |
 | GET | `/api/bazi/history` | 八字历史记录 |
-

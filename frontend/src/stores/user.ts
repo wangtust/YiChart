@@ -8,7 +8,7 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = ref(false)
 
   async function login(user: string, password: string) {
-    const data = await authApi.login({ username: user, password }) as any
+    const data = await authApi.login({ username: user, password })
     token.value = data.access_token
     localStorage.setItem('token', data.access_token)
     isLoggedIn.value = true
@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function fetchUser() {
     try {
-      const data = await authApi.getMe() as any
+      const data = await authApi.getMe()
       username.value = data.username
       isLoggedIn.value = true
     } catch {

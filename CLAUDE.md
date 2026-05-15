@@ -8,7 +8,6 @@
 - **后端**: Python 3.11+ + FastAPI + SQLAlchemy 2.0 + Alemic
 - **数据库**: MySQL
 - **大模型**: OpenAI GPT API (gpt-4o / gpt-4o-mini)
-- **部署**: Docker + Docker Compose
 
 ## 项目结构
 
@@ -16,7 +15,6 @@
 /root/YiChart/
 ├── frontend/          # Vue 3 前端
 ├── backend/           # FastAPI 后端
-├── docker-compose.yml
 ├── CLAUDE.md          # 本文件
 └── README.md
 ```
@@ -35,11 +33,6 @@ uvicorn app.main:app --reload --port 8000
 cd frontend
 npm install
 npm run dev
-```
-
-### Docker
-```bash
-docker-compose up -d
 ```
 
 ## API 端点
@@ -85,5 +78,5 @@ OPENAI_MODEL=gpt-4o-mini
 
 前端环境变量 (`.env`):
 ```
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=/api
 ```

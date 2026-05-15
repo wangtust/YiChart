@@ -29,6 +29,9 @@ def run_migrations():
     import os
     from alembic.config import Config
     from alembic import command
+    from alembic.script import ScriptDirectory
+    from sqlalchemy import text
+    from sqlalchemy.exc import OperationalError
 
     base_dir = os.path.dirname(os.path.dirname(__file__))
     alembic_cfg = Config(os.path.join(base_dir, "alembic.ini"))
@@ -36,7 +39,28 @@ def run_migrations():
     alembic_cfg.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
     # 应用已有迁移
-    command.upgrade(alembic_cfg, "head")
+    try:
+        command.upgrade(alembic_cfg, "head")
+    except OperationalError as exc:
+        error_code = getattr(getattr(exc, "orig", None), "args", [None])[0]
+        if error_code != 1021:
+            raise
+
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head = script.get_current_head()
+        with engine.connect() as connection:
+            versions = {
+                row[0]
+                for row in connection.execute(text("SELECT version_num FROM alembic_version"))
+            }
+
+        if head not in versions:
+            raise
+
+        logger.warning(
+            "Alembic 检查遇到 MySQL 临时空间不足，但数据库已在当前版本 %s，继续启动",
+            head,
+        )
     logger.info("数据库迁移检查完成")
 
 

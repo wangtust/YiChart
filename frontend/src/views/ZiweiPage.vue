@@ -92,7 +92,7 @@
     <!-- AI 分析 -->
     <div v-if="aiAnalysis" class="analysis-section">
       <h2 class="section-title">AI 命理分析</h2>
-      <div class="analysis-content" v-html="formatAnalysis(aiAnalysis)"></div>
+      <div class="analysis-content" v-html="formatAnalysisHtml(aiAnalysis)"></div>
     </div>
   </div>
 </template>
@@ -100,26 +100,19 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import { streamAnalyze, ziweiApi } from '@/api'
+import type { ZiweiInput, ZiweiResult } from '@/api'
+import { formatAnalysisHtml } from '@/utils/formatAnalysis'
 
 const loading = ref(false)
-const ziweiResult = ref<any>(null)
+const ziweiResult = ref<ZiweiResult | null>(null)
 const aiAnalysis = ref('')
 
-const form = reactive({
+const form = reactive<ZiweiInput>({
   birth_date: '',
   birth_time: '',
   gender: 'male',
 })
-
-function formatAnalysis(text: string) {
-  return text
-    .replace(/^###\s*(.+)$/gm, '<h3 class="analysis-h3">$1</h3>')
-    .replace(/^##\s*(.+)$/gm, '<h2 class="analysis-h2">$1</h2>')
-    .replace(/^#\s*(.+)$/gm, '<h1 class="analysis-h1">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
-}
 
 async function handleAnalyze() {
   if (!form.birth_date || !form.birth_time) {
@@ -132,51 +125,17 @@ async function handleAnalyze() {
   aiAnalysis.value = ''
 
   try {
-    const token = localStorage.getItem('token')
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
     // 先排盘
-    const result = await fetch('/api/ziwei/calculate', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(form),
-    }).then(r => r.json())
+    const result = await ziweiApi.calculate({ ...form })
     ziweiResult.value = result
 
     // 流式获取 AI 分析
-    const response = await fetch('/api/ziwei/analyze', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(form),
+    await streamAnalyze('/ziwei/analyze', { ...form }, (chunk) => {
+      aiAnalysis.value += chunk
     })
-
-    const reader = response.body?.getReader()
-    if (!reader) return
-
-    const decoder = new TextDecoder()
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      const text = decoder.decode(value)
-      for (const line of text.split('\n')) {
-        if (line.startsWith('data: ')) {
-          const content = line.slice(6)
-          if (content === '[DONE]') {
-            loading.value = false
-            return
-          }
-          try {
-            const parsed = JSON.parse(content)
-            if (parsed.content) aiAnalysis.value += parsed.content
-          } catch {}
-        }
-      }
-    }
-    loading.value = false
-  } catch (error: any) {
-    ElMessage.error(error.message || '分析失败')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '分析失败')
+  } finally {
     loading.value = false
   }
 }

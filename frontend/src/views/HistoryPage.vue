@@ -63,11 +63,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { baziApi, ziweiApi, liuyaoApi } from '@/api'
+import type { HistoryRecord } from '@/api'
 
 const router = useRouter()
 const loading = ref(true)
 const activeTab = ref('all')
-const records = ref<any[]>([])
+const records = ref<HistoryRecord[]>([])
 
 const tabs = [
   { key: 'all', label: '全部' },
@@ -87,12 +88,16 @@ const filteredRecords = computed(() => {
   return records.value.filter(r => r._type === activeTab.value)
 })
 
-function formatDate(dt: string | null) {
+function formatDate(dt?: string | null) {
   if (!dt) return ''
   return new Date(dt).toLocaleString('zh-CN')
 }
 
-function goToDetail(record: any) {
+function getTime(dt?: string | null) {
+  return dt ? new Date(dt).getTime() : 0
+}
+
+function goToDetail(record: HistoryRecord) {
   router.push(`/result/${record._type}/${record.id}`)
 }
 
@@ -105,13 +110,13 @@ onMounted(async () => {
     ])
 
     const all = [
-      ...(baziList as any[]).map(r => ({ ...r, _type: 'bazi' })),
-      ...(ziweiList as any[]).map(r => ({ ...r, _type: 'ziwei' })),
-      ...(liuyaoList as any[]).map(r => ({ ...r, _type: 'liuyao' })),
-    ]
+      ...baziList.map((r): HistoryRecord => ({ ...r, _type: 'bazi' })),
+      ...ziweiList.map((r): HistoryRecord => ({ ...r, _type: 'ziwei' })),
+      ...liuyaoList.map((r): HistoryRecord => ({ ...r, _type: 'liuyao' })),
+    ] satisfies HistoryRecord[]
 
     // 按时间倒序
-    all.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    all.sort((a, b) => getTime(b.created_at) - getTime(a.created_at))
     records.value = all
   } catch {
     // handle error

@@ -1,12 +1,12 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
 class ZiweiInput(BaseModel):
     birth_date: str  # YYYY-MM-DD
     birth_time: str  # HH:MM
-    gender: str  # male / female
+    gender: Literal["male", "female"]
 
 
 class ZiweiRecordResponse(BaseModel):

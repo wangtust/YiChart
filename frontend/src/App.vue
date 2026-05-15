@@ -1,44 +1,47 @@
 <template>
-  <div class="app-container">
-    <header class="app-header">
-      <div class="header-content">
-        <router-link to="/" class="logo">
-          <span class="logo-icon">☯</span>
-          <span class="logo-text">易算</span>
-        </router-link>
-        <nav class="nav-links">
-          <router-link to="/">首页</router-link>
-          <router-link to="/bazi">八字算命</router-link>
-          <router-link to="/ziwei">紫微斗数</router-link>
-          <router-link to="/liuyao">六爻占卜</router-link>
-          <router-link to="/history">历史记录</router-link>
-        </nav>
-        <div class="user-section">
-          <template v-if="userStore.isLoggedIn">
-            <span class="username">{{ userStore.username }}</span>
-            <el-button text size="small" @click="handleLogout">退出</el-button>
-          </template>
-          <router-link v-else to="/login" class="login-link">登录</router-link>
+  <el-config-provider :locale="zhCn">
+    <div class="app-container">
+      <header class="app-header">
+        <div class="header-content">
+          <router-link to="/" class="logo">
+            <span class="logo-icon">☯</span>
+            <span class="logo-text">易算</span>
+          </router-link>
+          <nav class="nav-links">
+            <router-link to="/">首页</router-link>
+            <router-link to="/bazi">八字算命</router-link>
+            <router-link to="/ziwei">紫微斗数</router-link>
+            <router-link to="/liuyao">六爻占卜</router-link>
+            <router-link to="/history">历史记录</router-link>
+          </nav>
+          <div class="user-section">
+            <template v-if="userStore.isLoggedIn">
+              <span class="username">{{ userStore.username }}</span>
+              <el-button text size="small" @click="handleLogout">退出</el-button>
+            </template>
+            <router-link v-else to="/login" class="login-link">登录</router-link>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <main class="app-main">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
+      <main class="app-main">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </main>
 
-    <footer class="app-footer">
-      <p>易算 - AI 命理分析 | 仅供娱乐参考</p>
-    </footer>
-  </div>
+      <footer class="app-footer">
+        <p>易算 - AI 命理分析 | 仅供娱乐参考</p>
+      </footer>
+    </div>
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()

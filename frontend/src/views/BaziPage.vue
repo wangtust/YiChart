@@ -78,9 +78,9 @@
         <h3>五行分布</h3>
         <div class="wuxing-bars">
           <div class="wuxing-bar" v-for="(count, wx) in baziResult.wuxing" :key="wx">
-            <span class="wuxing-name" :class="getWuxingClass(wx as string)">{{ wx }}</span>
+            <span class="wuxing-name" :class="getWuxingClass(String(wx))">{{ wx }}</span>
             <div class="bar-track">
-              <div class="bar-fill" :class="getWuxingBgClass(wx as string)" :style="{ width: count * 20 + '%' }"></div>
+              <div class="bar-fill" :class="getWuxingBgClass(String(wx))" :style="{ width: count * 20 + '%' }"></div>
             </div>
             <span class="wuxing-count">{{ count }}</span>
           </div>
@@ -96,7 +96,7 @@
     <!-- AI 分析结果 -->
     <div v-if="aiAnalysis" class="analysis-section">
       <h2 class="section-title">AI 命理分析</h2>
-      <div class="analysis-content" v-html="formatAnalysis(aiAnalysis)"></div>
+      <div class="analysis-content" v-html="formatAnalysisHtml(aiAnalysis)"></div>
     </div>
   </div>
 </template>
@@ -105,12 +105,14 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { streamAnalyze, baziApi } from '@/api'
+import type { BaziInput, BaziPillar, BaziResult } from '@/api'
+import { formatAnalysisHtml } from '@/utils/formatAnalysis'
 
 const loading = ref(false)
-const baziResult = ref<any>(null)
+const baziResult = ref<BaziResult | null>(null)
 const aiAnalysis = ref('')
 
-const form = reactive({
+const form = reactive<BaziInput>({
   birth_date: '',
   birth_time: '',
   gender: 'male',
@@ -131,7 +133,7 @@ const pillarShishenKeys: Record<string, string> = {
   hour_pillar: '时干',
 }
 
-const pillars = ref<any>({})
+const pillars = ref<Record<string, BaziPillar>>({})
 
 const DIZHI_WUXING: Record<string, string> = {
   子: '水', 丑: '土', 寅: '木', 卯: '木', 辰: '土', 巳: '火',
@@ -152,16 +154,6 @@ function getWuxingBgClass(wx: string) {
   return map[wx] || ''
 }
 
-function formatAnalysis(text: string) {
-  return text
-    .replace(/^###\s*(.+)$/gm, '<h3 class="analysis-h3">$1</h3>')
-    .replace(/^##\s*(.+)$/gm, '<h2 class="analysis-h2">$1</h2>')
-    .replace(/^#\s*(.+)$/gm, '<h1 class="analysis-h1">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
-}
-
 async function handleAnalyze() {
   if (!form.birth_date || !form.birth_time) {
     ElMessage.warning('请填写完整的出生信息')
@@ -177,7 +169,7 @@ async function handleAnalyze() {
     const result = await baziApi.calculate({
       birth_date: form.birth_date,
       birth_time: form.birth_time,
-      gender: form.gender as 'male' | 'female',
+      gender: form.gender,
       is_lunar: form.is_lunar,
     })
     baziResult.value = result
@@ -190,10 +182,11 @@ async function handleAnalyze() {
 
     // 流式获取 AI 分析
     await streamAnalyze(
+      '/bazi/analyze',
       {
         birth_date: form.birth_date,
         birth_time: form.birth_time,
-        gender: form.gender as 'male' | 'female',
+        gender: form.gender,
         is_lunar: form.is_lunar,
       },
       (chunk) => {

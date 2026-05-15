@@ -8,7 +8,7 @@
       <h1 class="page-title">{{ typeLabels[recordType] }}分析报告</h1>
       <p class="record-meta">{{ metaText }}</p>
 
-      <div class="analysis-content" v-html="formatAnalysis(record.ai_analysis || '暂无分析结果')"></div>
+      <div class="analysis-content" v-html="formatAnalysisHtml(record.ai_analysis || '暂无分析结果')"></div>
 
       <div class="actions">
         <el-button @click="$router.push(`/${recordType}`)">重新算命</el-button>
@@ -27,11 +27,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { baziApi, ziweiApi, liuyaoApi } from '@/api'
+import type { BaziRecord, LiuYaoRecord, ZiweiRecord } from '@/api'
+import { formatAnalysisHtml } from '@/utils/formatAnalysis'
 
 const route = useRoute()
 const loading = ref(true)
-const record = ref<any>(null)
-const recordType = ref(route.params.type as string || 'bazi')
+const record = ref<BaziRecord | ZiweiRecord | LiuYaoRecord | null>(null)
+const recordType = ref((route.params.type as string) || 'bazi')
 
 const typeLabels: Record<string, string> = {
   bazi: '八字命理',
@@ -43,35 +45,32 @@ const metaText = computed(() => {
   if (!record.value) return ''
   const r = record.value
   if (recordType.value === 'bazi') {
-    return `出生: ${r.birth_date} ${r.birth_time} | ${r.gender === 'male' ? '男' : '女'} | ${r.shengxiao || ''}`
+    const bazi = r as BaziRecord
+    return `出生: ${bazi.birth_date} ${bazi.birth_time} | ${bazi.gender === 'male' ? '男' : '女'} | ${bazi.shengxiao || ''}`
   } else if (recordType.value === 'ziwei') {
-    return `出生: ${r.birth_date} ${r.birth_time} | ${r.gender === 'male' ? '男' : '女'} | 命宫: ${r.ming_gong || ''}`
+    const ziwei = r as ZiweiRecord
+    return `出生: ${ziwei.birth_date} ${ziwei.birth_time} | ${ziwei.gender === 'male' ? '男' : '女'} | 命宫: ${ziwei.ming_gong || ''}`
   } else if (recordType.value === 'liuyao') {
-    return `问题: ${r.question} | ${r.gua_name || ''}`
+    const liuyao = r as LiuYaoRecord
+    return `问题: ${liuyao.question} | ${liuyao.gua_name || ''}`
   }
   return ''
 })
 
-function formatAnalysis(text: string) {
-  return text
-    .replace(/^###\s*(.+)$/gm, '<h3 class="analysis-h3">$1</h3>')
-    .replace(/^##\s*(.+)$/gm, '<h2 class="analysis-h2">$1</h2>')
-    .replace(/^#\s*(.+)$/gm, '<h1 class="analysis-h1">$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
-}
-
 onMounted(async () => {
-  const type = route.params.type as string || 'bazi'
+  const type = (route.params.type as string) || 'bazi'
   const id = route.params.id
   recordType.value = type
 
   if (id) {
     try {
-      const apiMap: Record<string, any> = { bazi: baziApi, ziwei: ziweiApi, liuyao: liuyaoApi }
-      const apiClient = apiMap[type] || baziApi
-      record.value = await apiClient.getRecord(Number(id))
+      if (type === 'ziwei') {
+        record.value = await ziweiApi.getRecord(Number(id))
+      } else if (type === 'liuyao') {
+        record.value = await liuyaoApi.getRecord(Number(id))
+      } else {
+        record.value = await baziApi.getRecord(Number(id))
+      }
     } catch {
       // handle error
     }
